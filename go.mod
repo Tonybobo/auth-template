@@ -3,6 +3,7 @@ module github.com/tonybobo/auth-template
 go 1.19
 
 require (
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/k3a/html2text v1.0.8
