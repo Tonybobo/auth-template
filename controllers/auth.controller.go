@@ -34,7 +34,8 @@ func NewAuthController(authService services.AuthService, userService services.Us
 func (ac *AuthController) SignUpUser(ctx *gin.Context) {
 	var user *models.SignUpInput
 
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	if err := ctx.BindJSON(&user); err != nil {
+
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": "fail", "message": err.Error()})
 		return
 	}
@@ -71,7 +72,7 @@ func (ac *AuthController) SignUpUser(ctx *gin.Context) {
 	}
 
 	emailData := utils.EmailData{
-		URL:       "http://localhost:8080/verify/" + verificationCode,
+		URL:       "http://localhost:8080/api/auth/verifyemail/" + code,
 		FirstName: firstName,
 		Subject:   "Please Verify",
 	}
@@ -179,6 +180,7 @@ func (ac *AuthController) RefreshAccessToken(ctx *gin.Context) {
 }
 
 func (ac *AuthController) LogoutUser(ctx *gin.Context) {
+	fmt.Print(ctx.Get("currentUser"))
 	ctx.SetCookie("access_token", "", -1, "/", "localhost", false, true)
 	ctx.SetCookie("refresh_token", "", -1, "/", "localhost", false, true)
 	ctx.SetCookie("logged_in", "", -1, "/", "localhost", false, true)
@@ -264,8 +266,10 @@ func (ac *AuthController) ForgetPassword(ctx *gin.Context) {
 		firstName = strings.Split(firstName, " ")[1]
 	}
 
+	config, _ := config.LoadConfig(".")
+
 	emailData := utils.EmailData{
-		URL:       "http://localhost:8080/resetPassword/" + resetToken,
+		URL:       "http://localhost:" + config.Port + "/api/auth/resetpassword/" + resetToken,
 		FirstName: firstName,
 		Subject:   "Please Reset the password within 15 minutes",
 	}
@@ -297,7 +301,7 @@ func (ac *AuthController) ResetPassword(ctx *gin.Context) {
 	hashPassword, _ := utils.HashPassword(userCredential.Password)
 	resetPasswordToken := utils.Encode(resetToken)
 
-	query := bson.D{{Key: "passwordResetToken", Value: resetPasswordToken}, {Key: "$gt", Value: bson.D{{Key: "passwordResetAt", Value: time.Now()}}}}
+	query := bson.D{{Key: "passwordResetToken", Value: resetPasswordToken}, {Key: "passwordResetAt", Value: bson.D{{Key: "$gt", Value: time.Now()}}}}
 	update := bson.D{
 		{Key: "$set", Value: bson.D{{Key: "password", Value: hashPassword}}},
 		{Key: "$unset", Value: bson.D{{Key: "passwordResetToken", Value: ""}, {Key: "passwordResetAt", Value: ""}}}}

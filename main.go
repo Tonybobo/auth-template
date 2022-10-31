@@ -62,6 +62,7 @@ func init() {
 	authService = services.NewAuthService(authCollection, ctx)
 
 	AuthController = controllers.NewAuthController(authService, userService, ctx, authCollection, temp)
+	AuthRouteController = routes.NewAuthRouteController(AuthController)
 
 	UserController = controllers.NewUserController(userService)
 	UserRouteController = routes.NewUserRouteController(UserController)
