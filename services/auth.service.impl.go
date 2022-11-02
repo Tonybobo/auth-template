@@ -14,12 +14,12 @@ import (
 )
 
 type AuthServiceImpl struct {
-	collection *mongo.Collection
+	AuthRepository models.AuthRepository
 	ctx        context.Context
 }
 
-func NewAuthService(collection *mongo.Collection, ctx context.Context) AuthService {
-	return &AuthServiceImpl{collection, ctx}
+func NewAuthService(AuthRepository models.AuthRepository, ctx context.Context) AuthService {
+	return &AuthServiceImpl{AuthRepository, ctx}
 }
 
 func (uc *AuthServiceImpl) SignInUser(user *models.SignInInput) (*models.DBResponse, error) {

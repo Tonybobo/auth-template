@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/tonybobo/auth-template/config"
 	"github.com/tonybobo/auth-template/controllers"
+	"github.com/tonybobo/auth-template/repository"
 	"github.com/tonybobo/auth-template/routes"
 	"github.com/tonybobo/auth-template/services"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -27,7 +28,6 @@ var (
 	UserController      controllers.UserController
 	UserRouteController routes.UserRouteController
 
-	authCollection      *mongo.Collection
 	authService         services.AuthService
 	AuthController      controllers.AuthController
 	AuthRouteController routes.AuthRouteController
@@ -57,9 +57,9 @@ func init() {
 
 	fmt.Print("Successfully connected to DB")
 
-	authCollection = mongoClient.Database("golang_mongodb").Collection("users")
-	userService = services.NewUserServiceImpl(authCollection, ctx)
-	authService = services.NewAuthService(authCollection, ctx)
+	authRepository := repository.NewAuthRepository(mongoClient.Database("golang_mongodb").Collection("users"))
+	userService = services.NewUserServiceImpl(authRepository, ctx)
+	authService = services.NewAuthService(authRepository, ctx)
 
 	AuthController = controllers.NewAuthController(authService, userService, ctx, temp)
 	AuthRouteController = routes.NewAuthRouteController(AuthController)

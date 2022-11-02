@@ -14,12 +14,12 @@ import (
 )
 
 type UserServiceImpl struct {
-	collection *mongo.Collection
-	ctx        context.Context
+	AuthRepository models.AuthRepository
+	ctx            context.Context
 }
 
-func NewUserServiceImpl(collection *mongo.Collection, ctx context.Context) UserService {
-	return &UserServiceImpl{collection, ctx}
+func NewUserServiceImpl(AuthRepository models.AuthRepository, ctx context.Context) UserService {
+	return &UserServiceImpl{AuthRepository, ctx}
 }
 
 func (us *UserServiceImpl) FindUserById(id string) (*models.DBResponse, error) {
@@ -28,28 +28,18 @@ func (us *UserServiceImpl) FindUserById(id string) (*models.DBResponse, error) {
 		return nil, errors.New("invalid User ID")
 	}
 
-	var user *models.DBResponse
-
-	query := bson.M{"_id": oid}
-	if err := us.collection.FindOne(us.ctx, query).Decode(&user); err != nil {
-		if err == mongo.ErrNoDocuments {
-			return &models.DBResponse{}, err
-		}
+	user, err := us.AuthRepository.FindUserById(us.ctx, oid)
+	if err != nil {
 		return nil, err
 	}
-
 	return user, nil
 
 }
 
 func (us *UserServiceImpl) FindUserByEmail(email string) (*models.DBResponse, error) {
-	var user *models.DBResponse
-	query := bson.M{"email": strings.ToLower(email)}
+	user, err := us.AuthRepository.FindUserByEmail(us.ctx, email)
 
-	if err := us.collection.FindOne(us.ctx, query).Decode(&user); err != nil {
-		if err == mongo.ErrNilDocument {
-			return &models.DBResponse{}, err
-		}
+	if err != nil {
 		return nil, err
 	}
 
