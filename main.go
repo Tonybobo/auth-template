@@ -61,7 +61,7 @@ func init() {
 	userService = services.NewUserServiceImpl(authCollection, ctx)
 	authService = services.NewAuthService(authCollection, ctx)
 
-	AuthController = controllers.NewAuthController(authService, userService, ctx, authCollection, temp)
+	AuthController = controllers.NewAuthController(authService, userService, ctx, temp)
 	AuthRouteController = routes.NewAuthRouteController(AuthController)
 
 	UserController = controllers.NewUserController(userService)
@@ -71,13 +71,7 @@ func init() {
 
 }
 
-func main() {
-	config, err := config.LoadConfig(".")
-	if err != nil {
-		log.Fatal("Could not load environment variables", err)
-	}
-
-	defer mongoClient.Disconnect(ctx)
+func SetUpRouter() *gin.Engine {
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{"http://127.0.0.1:3000"}
@@ -93,5 +87,16 @@ func main() {
 
 	AuthRouteController.AuthRoute(router, userService)
 	UserRouteController.UserRoute(router, userService)
+	return server
+}
+
+func main() {
+	config, err := config.LoadConfig(".")
+	if err != nil {
+		log.Fatal("Could not load environment variables", err)
+	}
+	defer mongoClient.Disconnect(ctx)
+	server := SetUpRouter()
+
 	log.Fatal(server.Run(":" + config.Port))
 }

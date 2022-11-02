@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tonybobo/auth-template/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -83,4 +84,39 @@ func (us *UserServiceImpl) UpdateOne(field string, value interface{}) (*models.D
 	}
 
 	return &models.DBResponse{}, nil
+}
+
+func (us *UserServiceImpl) ResetPasswordToken(email string, passwordResetToken string) (*mongo.UpdateResult, error) {
+	query := bson.D{{Key: "email", Value: strings.ToLower(email)}}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "passwordResetToken", Value: passwordResetToken},
+			{Key: "passwordResetAt", Value: time.Now().Add(time.Minute * 15)},
+		}},
+	}
+	result, err := us.collection.UpdateOne(us.ctx, query, update)
+
+	return result, err
+}
+
+func (us *UserServiceImpl) VerifyEmail(verificationCode string) (*mongo.UpdateResult, error) {
+	query := bson.D{{Key: "verificationCode", Value: verificationCode}}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{{Key: "verified", Value: true}}},
+		{Key: "$unset", Value: bson.D{{Key: "verificationCode", Value: ""}}}}
+
+	result, err := us.collection.UpdateOne(us.ctx, query, update)
+
+	return result, err
+}
+
+func (us *UserServiceImpl) ClearResetPasswordToken(token string, password string) (*mongo.UpdateResult, error) {
+	query := bson.D{{Key: "passwordResetToken", Value: token}, {Key: "passwordResetAt", Value: bson.D{{Key: "$gt", Value: time.Now()}}}}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{{Key: "password", Value: password}}},
+		{Key: "$unset", Value: bson.D{{Key: "passwordResetToken", Value: ""}, {Key: "passwordResetAt", Value: ""}}}}
+
+	result, err := us.collection.UpdateOne(us.ctx, query, update)
+
+	return result, err
 }

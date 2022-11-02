@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/thanhpk/randstr"
@@ -15,7 +14,6 @@ import (
 	"github.com/tonybobo/auth-template/models"
 	"github.com/tonybobo/auth-template/services"
 	"github.com/tonybobo/auth-template/utils"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -23,12 +21,11 @@ type AuthController struct {
 	authService services.AuthService
 	userService services.UserService
 	ctx         context.Context
-	collection  *mongo.Collection
 	temp        *template.Template
 }
 
-func NewAuthController(authService services.AuthService, userService services.UserService, ctx context.Context, collection *mongo.Collection, temp *template.Template) AuthController {
-	return AuthController{authService, userService, ctx, collection, temp}
+func NewAuthController(authService services.AuthService, userService services.UserService, ctx context.Context, temp *template.Template) AuthController {
+	return AuthController{authService, userService, ctx, temp}
 }
 
 func (ac *AuthController) SignUpUser(ctx *gin.Context) {
@@ -191,12 +188,7 @@ func (ac *AuthController) VerifyEmail(ctx *gin.Context) {
 	code := ctx.Params.ByName("verificationCode")
 	verificationCode := utils.Encode(code)
 
-	query := bson.D{{Key: "verificationCode", Value: verificationCode}}
-	update := bson.D{
-		{Key: "$set", Value: bson.D{{Key: "verified", Value: true}}},
-		{Key: "$unset", Value: bson.D{{Key: "verificationCode", Value: ""}}}}
-
-	result, err := ac.collection.UpdateOne(ac.ctx, query, update)
+	result, err := ac.userService.VerifyEmail(verificationCode)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{"status": "fail", "message": err.Error()})
@@ -241,16 +233,7 @@ func (ac *AuthController) ForgetPassword(ctx *gin.Context) {
 
 	passwordResetToken := utils.Encode(resetToken)
 
-	query := bson.D{{Key: "email", Value: strings.ToLower(user.Email)}}
-	update := bson.D{
-		{Key: "$set", Value: bson.D{
-			{Key: "passwordResetToken", Value: passwordResetToken},
-			{Key: "passwordResetAt", Value: time.Now().Add(time.Minute * 15)},
-		}},
-	}
-
-	result, err := ac.collection.UpdateOne(ac.ctx, query, update)
-
+	result, err := ac.userService.ResetPasswordToken(user.Email, passwordResetToken)
 	if err != nil {
 		ctx.JSON(http.StatusForbidden, gin.H{"status": "success", "message": "There was a error sending reset email"})
 		return
@@ -301,12 +284,7 @@ func (ac *AuthController) ResetPassword(ctx *gin.Context) {
 	hashPassword, _ := utils.HashPassword(userCredential.Password)
 	resetPasswordToken := utils.Encode(resetToken)
 
-	query := bson.D{{Key: "passwordResetToken", Value: resetPasswordToken}, {Key: "passwordResetAt", Value: bson.D{{Key: "$gt", Value: time.Now()}}}}
-	update := bson.D{
-		{Key: "$set", Value: bson.D{{Key: "password", Value: hashPassword}}},
-		{Key: "$unset", Value: bson.D{{Key: "passwordResetToken", Value: ""}, {Key: "passwordResetAt", Value: ""}}}}
-
-	result, err := ac.collection.UpdateOne(ac.ctx, query, update)
+	result, err := ac.userService.ClearResetPasswordToken(resetPasswordToken, hashPassword)
 
 	if result.MatchedCount == 0 {
 		ctx.JSON(http.StatusForbidden, gin.H{"status": "fail", "message": "Invalid or Expired Token"})
