@@ -58,10 +58,10 @@ func init() {
 	fmt.Print("Successfully connected to DB")
 
 	authRepository := repository.NewAuthRepository(mongoClient.Database("golang_mongodb").Collection("users"))
-	userService = services.NewUserServiceImpl(authRepository, ctx)
-	authService = services.NewAuthService(authRepository, ctx)
+	userService = services.NewUserServiceImpl(authRepository, ctx, temp)
+	authService = services.NewAuthService(authRepository, ctx, temp)
 
-	AuthController = controllers.NewAuthController(authService, userService, ctx, temp)
+	AuthController = controllers.NewAuthController(authService, userService, ctx)
 	AuthRouteController = routes.NewAuthRouteController(AuthController)
 
 	UserController = controllers.NewUserController(userService)
