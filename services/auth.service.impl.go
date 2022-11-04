@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -36,11 +37,19 @@ func NewAuthService(AuthRepository models.AuthRepository, ctx context.Context, t
 	return &AuthServiceImpl{AuthRepository, ctx, temp}
 }
 
+func (uc *AuthServiceImpl) Test() *AuthServiceResponse {
+
+	return &AuthServiceResponse{
+		Message: "test",
+	}
+}
+
 func (uc *AuthServiceImpl) SignInUser(credential *models.SignInInput) *AuthServiceResponse {
 
-	var result *AuthServiceResponse
-	result.StatusCode = http.StatusOK
-	result.Status = "success"
+	result := &AuthServiceResponse{
+		Status:     "success",
+		StatusCode: http.StatusOK,
+	}
 
 	user, err := uc.AuthRepository.FindUserByEmail(uc.ctx, credential.Email)
 
@@ -56,6 +65,7 @@ func (uc *AuthServiceImpl) SignInUser(credential *models.SignInInput) *AuthServi
 		result.StatusCode = http.StatusBadGateway
 		result.Message = err.Error()
 		result.Err = err
+		return result
 	}
 
 	if !user.Verified {
@@ -104,9 +114,10 @@ func (uc *AuthServiceImpl) SignInUser(credential *models.SignInInput) *AuthServi
 
 func (uc *AuthServiceImpl) SignUpUser(user *models.SignUpInput) *AuthServiceResponse {
 
-	var result *AuthServiceResponse
-	result.StatusCode = http.StatusOK
-	result.Status = "success"
+	result := &AuthServiceResponse{
+		Status:     "success",
+		StatusCode: http.StatusOK,
+	}
 
 	if user.Password != user.PasswordConfirm {
 		result.Err = errors.New("password not match")
@@ -115,6 +126,7 @@ func (uc *AuthServiceImpl) SignUpUser(user *models.SignUpInput) *AuthServiceResp
 		result.StatusCode = http.StatusBadRequest
 		return result
 	}
+
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = user.CreatedAt
 	user.Email = strings.ToLower(user.Email)
@@ -124,9 +136,9 @@ func (uc *AuthServiceImpl) SignUpUser(user *models.SignUpInput) *AuthServiceResp
 
 	hashedPassword, _ := utils.HashPassword(user.Password)
 	user.Password = hashedPassword
-
+	fmt.Print("1")
 	newUser, err := uc.AuthRepository.SignUpUser(uc.ctx, user)
-
+	fmt.Print("2")
 	if err != nil {
 		result.Err = err
 		result.Status = "fail"

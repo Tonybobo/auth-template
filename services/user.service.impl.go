@@ -27,9 +27,11 @@ func NewUserServiceImpl(AuthRepository models.AuthRepository, ctx context.Contex
 }
 
 func (us *UserServiceImpl) RefreshAccessToken(cookie string) *AuthServiceResponse {
-	var result *AuthServiceResponse
-	result.Status = "success"
-	result.StatusCode = http.StatusOK
+
+	result := &AuthServiceResponse{
+		Status:     "success",
+		StatusCode: http.StatusOK,
+	}
 
 	config, _ := config.LoadConfig(".")
 
@@ -44,6 +46,14 @@ func (us *UserServiceImpl) RefreshAccessToken(cookie string) *AuthServiceRespons
 	}
 
 	oid, err := primitive.ObjectIDFromHex(fmt.Sprint(sub))
+
+	if err != nil {
+		result.Err = err
+		result.Message = "Invalid Token"
+		result.Status = "fail"
+		result.StatusCode = http.StatusForbidden
+		return result
+	}
 
 	user, err := us.AuthRepository.FindUserById(us.ctx, oid)
 
@@ -84,28 +94,6 @@ func (us *UserServiceImpl) FindUserById(id string) (*models.DBResponse, error) {
 
 }
 
-func (us *UserServiceImpl) FindUserByEmail(email string) (*models.DBResponse, error) {
-	user, err := us.AuthRepository.FindUserByEmail(us.ctx, email)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (us *UserServiceImpl) UpdateUserById(id, field, value string) (*models.DBResponse, error) {
-	userId, _ := primitive.ObjectIDFromHex(id)
-
-	_, err := us.AuthRepository.UpdateUserById(us.ctx, userId, field, value)
-
-	if err != nil {
-		return &models.DBResponse{}, err
-	}
-
-	return &models.DBResponse{}, nil
-}
-
 func (us *UserServiceImpl) UpdateOne(field string, value interface{}) (*models.DBResponse, error) {
 
 	_, err := us.AuthRepository.UpdateOne(us.ctx, field, value)
@@ -117,25 +105,84 @@ func (us *UserServiceImpl) UpdateOne(field string, value interface{}) (*models.D
 	return &models.DBResponse{}, nil
 }
 
-func (us *UserServiceImpl) VerifyEmail(verificationCode string) (*mongo.UpdateResult, error) {
+func (us *UserServiceImpl) VerifyEmail(verificationCode string) *AuthServiceResponse {
+
+	response := &AuthServiceResponse{
+		Status:     "success",
+		StatusCode: http.StatusOK,
+		Message:    "Successfully Verified",
+	}
 
 	result, err := us.AuthRepository.VerifyEmail(us.ctx, verificationCode)
 
-	return result, err
+	if err != nil {
+		response.Err = err
+		response.Message = err.Error()
+		response.Status = "fail"
+		response.StatusCode = http.StatusBadGateway
+		return response
+	}
+
+	if result.MatchedCount == 0 {
+		response.StatusCode = http.StatusForbidden
+		response.Status = "fail"
+		response.Message = "Invalid Email"
+		response.Err = errors.New("invalid email")
+		return response
+	}
+
+	return response
 }
 
-func (us *UserServiceImpl) ClearResetPasswordToken(token string, password string) (*mongo.UpdateResult, error) {
+func (us *UserServiceImpl) ResetPassword(user *models.ResetPasswordInput, resetToken string) *AuthServiceResponse {
 
-	result, err := us.AuthRepository.ClearResetPasswordToken(us.ctx, token, password)
+	response := &AuthServiceResponse{
+		Status:     "success",
+		StatusCode: http.StatusOK,
+		Message:    "Password updated successfully. Please Login with new password",
+	}
 
-	return result, err
+	if user.Password != user.PasswordConfirm {
+		response.Status = "fail"
+		response.StatusCode = http.StatusBadRequest
+		response.Message = "Password does not match"
+
+		return response
+	}
+
+	hashPassword, _ := utils.HashPassword(user.Password)
+	resetPasswordToken := utils.Encode(resetToken)
+
+	result, err := us.AuthRepository.ClearResetPasswordToken(us.ctx, resetPasswordToken, hashPassword)
+
+	if result.MatchedCount == 0 {
+		response.Status = "fail"
+		response.StatusCode = http.StatusForbidden
+		response.Message = "Invalid or Expired Token"
+		response.Err = errors.New("invalid or expired token")
+
+		return response
+	}
+
+	if err != nil {
+		response.Status = "fail"
+		response.StatusCode = http.StatusBadGateway
+		response.Message = err.Error()
+		response.Err = err
+
+		return response
+	}
+
+	return response
 }
 
 func (us *UserServiceImpl) ForgetPassword(email string) *AuthServiceResponse {
-	var response *AuthServiceResponse
 
-	response.Message = "You will receive a reset email if user with that email exist"
-	response.Status = "success"
+	response := &AuthServiceResponse{
+		Message:    "You will receive a reset email if user with that email exist",
+		Status:     "success",
+		StatusCode: http.StatusOK,
+	}
 
 	user, err := us.AuthRepository.FindUserByEmail(us.ctx, email)
 

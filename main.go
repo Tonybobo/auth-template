@@ -56,8 +56,8 @@ func init() {
 	}
 
 	fmt.Print("Successfully connected to DB")
-
-	authRepository := repository.NewAuthRepository(mongoClient.Database("golang_mongodb").Collection("users"))
+	collection := mongoClient.Database("golang_mongodb").Collection("users")
+	authRepository := repository.NewAuthRepository(collection)
 	userService = services.NewUserServiceImpl(authRepository, ctx, temp)
 	authService = services.NewAuthService(authRepository, ctx, temp)
 
