@@ -3,14 +3,12 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/thanhpk/randstr"
 	"github.com/tonybobo/auth-template/config"
 	"github.com/tonybobo/auth-template/models"
 	"github.com/tonybobo/auth-template/utils"
@@ -136,9 +134,7 @@ func (uc *AuthServiceImpl) SignUpUser(user *models.SignUpInput) *AuthServiceResp
 
 	hashedPassword, _ := utils.HashPassword(user.Password)
 	user.Password = hashedPassword
-	fmt.Print("1")
-	newUser, err := uc.AuthRepository.SignUpUser(uc.ctx, user)
-	fmt.Print("2")
+	newUser, err, code := uc.AuthRepository.SignUpUser(uc.ctx, user)
 	if err != nil {
 		result.Err = err
 		result.Status = "fail"
@@ -149,11 +145,6 @@ func (uc *AuthServiceImpl) SignUpUser(user *models.SignUpInput) *AuthServiceResp
 
 	result.User = newUser
 	result.Message = "An email with the verification code has been sent to " + result.User.Email
-
-	code := randstr.String(20)
-	verificationCode := utils.Encode(code)
-
-	_, err = uc.AuthRepository.UpdateUserById(uc.ctx, newUser.ID, "verificationCode", verificationCode)
 
 	if err != nil {
 		result.Err = err
@@ -169,7 +160,7 @@ func (uc *AuthServiceImpl) SignUpUser(user *models.SignUpInput) *AuthServiceResp
 		firstName = strings.Split(firstName, " ")[1]
 	}
 
-	config, err := config.LoadConfig(".")
+	config, err := config.LoadConfig("../")
 
 	if err != nil {
 		log.Panic("could not load environment variables")
