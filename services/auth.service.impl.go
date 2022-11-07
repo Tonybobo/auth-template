@@ -67,9 +67,10 @@ func (uc *AuthServiceImpl) SignInUser(credential *models.SignInInput) *AuthServi
 	}
 
 	if !user.Verified {
+		result.Err = errors.New("you have not verify the account , please verify your email to login ")
 		result.Status = "fail"
 		result.StatusCode = http.StatusUnauthorized
-		result.Message = "You have not verify the account , Please verify your email to login "
+		result.Message = result.Err.Error()
 		return result
 	}
 
@@ -134,7 +135,7 @@ func (uc *AuthServiceImpl) SignUpUser(user *models.SignUpInput) *AuthServiceResp
 
 	hashedPassword, _ := utils.HashPassword(user.Password)
 	user.Password = hashedPassword
-	newUser, err, code := uc.AuthRepository.SignUpUser(uc.ctx, user)
+	newUser, code, err := uc.AuthRepository.SignUpUser(uc.ctx, user)
 	if err != nil {
 		result.Err = err
 		result.Status = "fail"

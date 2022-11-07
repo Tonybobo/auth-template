@@ -76,7 +76,7 @@ func (r *authCollection) ResetPasswordToken(ctx context.Context, email, password
 	return result, err
 }
 
-func (r *authCollection) VerifyEmail(ctx context.Context, verificationCode string) (*mongo.UpdateResult, error) {
+func (r *authCollection) VerifyEmail(ctx context.Context, verificationCode string) error {
 	query := bson.D{{Key: "verificationCode", Value: verificationCode}}
 	update := bson.D{
 		{Key: "$set", Value: bson.D{{Key: "verified", Value: true}}},
@@ -84,28 +84,42 @@ func (r *authCollection) VerifyEmail(ctx context.Context, verificationCode strin
 
 	result, err := r.DB.UpdateOne(ctx, query, update)
 
-	return result, err
+	if result.MatchedCount == 0 {
+		return errors.New("invalid email")
+	}
+
+	return err
 }
 
-func (r *authCollection) ClearResetPasswordToken(ctx context.Context, token, password string) (*mongo.UpdateResult, error) {
-	query := bson.D{{Key: "passwordResetToken", Value: token}, {Key: "passwordResetAt", Value: bson.D{{Key: "$gt", Value: time.Now()}}}}
+func (r *authCollection) ClearResetPasswordToken(ctx context.Context, token, password string) error {
+	hashPassword, _ := utils.HashPassword(password)
+	resetPasswordToken := utils.Encode(token)
+	query := bson.D{{Key: "passwordResetToken", Value: resetPasswordToken}, {Key: "passwordResetAt", Value: bson.D{{Key: "$gt", Value: time.Now()}}}}
 	update := bson.D{
-		{Key: "$set", Value: bson.D{{Key: "password", Value: password}}},
+		{Key: "$set", Value: bson.D{{Key: "password", Value: hashPassword}}},
 		{Key: "$unset", Value: bson.D{{Key: "passwordResetToken", Value: ""}, {Key: "passwordResetAt", Value: ""}}}}
 
 	result, err := r.DB.UpdateOne(ctx, query, update)
 
-	return result, err
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return errors.New("invalid or expired token")
+	}
+
+	return nil
 }
 
-func (r *authCollection) SignUpUser(ctx context.Context, user *models.SignUpInput) (*models.DBResponse, error, string) {
+func (r *authCollection) SignUpUser(ctx context.Context, user *models.SignUpInput) (*models.DBResponse, string, error) {
 	result, err := r.DB.InsertOne(ctx, &user)
 
 	if err != nil {
 		if er, ok := err.(mongo.WriteException); ok && er.WriteErrors[0].Code == 11000 {
-			return nil, errors.New("user with that email already exist"), ""
+			return nil, "", errors.New("user with that email already exist")
 		}
-		return nil, err, ""
+		return nil, "", err
 	}
 
 	opt := options.Index()
@@ -114,14 +128,14 @@ func (r *authCollection) SignUpUser(ctx context.Context, user *models.SignUpInpu
 	index := mongo.IndexModel{Keys: bson.M{"email": 1}, Options: opt}
 
 	if _, err := r.DB.Indexes().CreateOne(ctx, index); err != nil {
-		return nil, errors.New("cannot create index for email"), ""
+		return nil, "", errors.New("cannot create index for email")
 	}
 
 	var newUser *models.DBResponse
 	query := bson.M{"_id": result.InsertedID}
 
 	if err := r.DB.FindOne(ctx, query).Decode(&newUser); err != nil {
-		return nil, err, ""
+		return nil, "", err
 	}
 
 	code := randstr.String(20)
@@ -132,8 +146,8 @@ func (r *authCollection) SignUpUser(ctx context.Context, user *models.SignUpInpu
 	_, err = r.DB.UpdateOne(ctx, query1, update)
 
 	if err != nil {
-		return nil, err, ""
+		return nil, "", err
 	}
 
-	return newUser, nil, verificationCode
+	return newUser, verificationCode, nil
 }

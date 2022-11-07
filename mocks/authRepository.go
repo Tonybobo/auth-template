@@ -13,42 +13,37 @@ type MockAuthRepository struct {
 	mock.Mock
 }
 
-func (m *MockAuthRepository) SignUpUser(ctx context.Context, user *models.SignUpInput) (*models.DBResponse, error, string) {
+func (m *MockAuthRepository) SignUpUser(ctx context.Context, user *models.SignUpInput) (*models.DBResponse, string, error) {
 	ret := m.Called(ctx, user)
 
 	var r0 *models.DBResponse
-	var r2 string
+	var r1 string
+	var r2 error
 
 	if ret.Get(0) != nil {
 		r0 = ret.Get(0).(*models.DBResponse)
 	}
 
-	var r1 error
 	if ret.Get(1) != nil {
-		r1 = ret.Get(1).(error)
+		r1 = ret.Get(1).(string)
 	}
 	if ret.Get(2) != nil {
-		r2 = ret.Get(2).(string)
+		r2 = ret.Get(2).(error)
 	}
 
 	return r0, r1, r2
 }
 
-func (m *MockAuthRepository) ClearResetPasswordToken(ctx context.Context, token, password string) (*mongo.UpdateResult, error) {
+func (m *MockAuthRepository) ClearResetPasswordToken(ctx context.Context, token, password string) error {
 	ret := m.Called(ctx, token, password)
 
-	var r0 *mongo.UpdateResult
+	var r0 error
 
 	if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*mongo.UpdateResult)
+		r0 = ret.Get(0).(error)
 	}
 
-	var r1 error
-	if ret.Get(1) != nil {
-		r1 = ret.Get(1).(error)
-	}
-
-	return r0, r1
+	return r0
 }
 
 func (m *MockAuthRepository) FindUserByEmail(ctx context.Context, email string) (*models.DBResponse, error) {
@@ -119,19 +114,14 @@ func (m *MockAuthRepository) UpdateOne(ctx context.Context, field string, value 
 	return r0, r1
 }
 
-func (m *MockAuthRepository) VerifyEmail(ctx context.Context, verificationCode string) (*mongo.UpdateResult, error) {
+func (m *MockAuthRepository) VerifyEmail(ctx context.Context, verificationCode string) error {
 	ret := m.Called(ctx, verificationCode)
 
-	var r0 *mongo.UpdateResult
+	var r0 error
 
 	if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*mongo.UpdateResult)
+		r0 = ret.Get(0).(error)
 	}
 
-	var r1 error
-	if ret.Get(1) != nil {
-		r1 = ret.Get(1).(error)
-	}
-
-	return r0, r1
+	return r0
 }

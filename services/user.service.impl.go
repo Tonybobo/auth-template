@@ -113,21 +113,20 @@ func (us *UserServiceImpl) VerifyEmail(verificationCode string) *AuthServiceResp
 		Message:    "Successfully Verified",
 	}
 
-	result, err := us.AuthRepository.VerifyEmail(us.ctx, verificationCode)
+	err := us.AuthRepository.VerifyEmail(us.ctx, verificationCode)
 
 	if err != nil {
+		if err.Error() == "invalid email" {
+			response.Err = err
+			response.Message = err.Error()
+			response.Status = "fail"
+			response.StatusCode = http.StatusForbidden
+			return response
+		}
 		response.Err = err
 		response.Message = err.Error()
 		response.Status = "fail"
 		response.StatusCode = http.StatusBadGateway
-		return response
-	}
-
-	if result.MatchedCount == 0 {
-		response.StatusCode = http.StatusForbidden
-		response.Status = "fail"
-		response.Message = "Invalid Email"
-		response.Err = errors.New("invalid email")
 		return response
 	}
 
@@ -150,21 +149,16 @@ func (us *UserServiceImpl) ResetPassword(user *models.ResetPasswordInput, resetT
 		return response
 	}
 
-	hashPassword, _ := utils.HashPassword(user.Password)
-	resetPasswordToken := utils.Encode(resetToken)
-
-	result, err := us.AuthRepository.ClearResetPasswordToken(us.ctx, resetPasswordToken, hashPassword)
-
-	if result.MatchedCount == 0 {
-		response.Status = "fail"
-		response.StatusCode = http.StatusForbidden
-		response.Message = "Invalid or Expired Token"
-		response.Err = errors.New("invalid or expired token")
-
-		return response
-	}
+	err := us.AuthRepository.ClearResetPasswordToken(us.ctx, resetToken, user.Password)
 
 	if err != nil {
+		if err.Error() == "invalid or expired token" {
+			response.Status = "fail"
+			response.StatusCode = http.StatusForbidden
+			response.Message = err.Error()
+			response.Err = err
+			return response
+		}
 		response.Status = "fail"
 		response.StatusCode = http.StatusBadGateway
 		response.Message = err.Error()
