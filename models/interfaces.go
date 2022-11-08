@@ -13,6 +13,7 @@ type AuthRepository interface {
 	UpdateOne(ctx context.Context, field string, value interface{}) (*mongo.UpdateResult, error)
 	ResetPasswordToken(ctx context.Context, email, passwordResetToken string) (*mongo.UpdateResult, error)
 	VerifyEmail(ctx context.Context, verificationCode string) error
+	ForgetPassword(ctx context.Context, email string) (*DBResponse, string, error)
 	ClearResetPasswordToken(ctx context.Context, token, password string) error
 	SignUpUser(ctx context.Context, user *SignUpInput) (*DBResponse, string, error)
 }

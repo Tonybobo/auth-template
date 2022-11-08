@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/thanhpk/randstr"
 	"github.com/tonybobo/auth-template/config"
 	"github.com/tonybobo/auth-template/models"
 	"github.com/tonybobo/auth-template/utils"
@@ -178,11 +177,12 @@ func (us *UserServiceImpl) ForgetPassword(email string) *AuthServiceResponse {
 		StatusCode: http.StatusOK,
 	}
 
-	user, err := us.AuthRepository.FindUserByEmail(us.ctx, email)
+	user, resetToken, err := us.AuthRepository.ForgetPassword(us.ctx, email)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			response.StatusCode = http.StatusOK
+			return response
 		}
 		response.StatusCode = http.StatusBadGateway
 		response.Status = "fail"
@@ -194,26 +194,8 @@ func (us *UserServiceImpl) ForgetPassword(email string) *AuthServiceResponse {
 	if !user.Verified {
 		response.StatusCode = http.StatusUnauthorized
 		response.Status = "fail"
-		return response
-	}
-
-	resetToken := randstr.String(20)
-
-	passwordResetToken := utils.Encode(resetToken)
-
-	result, err := us.AuthRepository.ResetPasswordToken(us.ctx, email, passwordResetToken)
-
-	if err != nil {
-		response.StatusCode = http.StatusForbidden
-		response.Status = "fail"
-		response.Message = "There was a error sending reset email"
-		response.Err = err
-		return response
-	}
-
-	if result.MatchedCount == 0 {
-		response.StatusCode = http.StatusOK
-		response.Status = "success"
+		response.Err = errors.New("account has not been verified. please verify your account with the email sent")
+		response.Message = response.Err.Error()
 		return response
 	}
 

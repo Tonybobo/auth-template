@@ -125,3 +125,27 @@ func (m *MockAuthRepository) VerifyEmail(ctx context.Context, verificationCode s
 
 	return r0
 }
+
+func (m *MockAuthRepository) ForgetPassword(ctx context.Context, email string) (*models.DBResponse, string, error) {
+	ret := m.Called(ctx, email)
+
+	var r0 *models.DBResponse
+
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*models.DBResponse)
+	}
+
+	var r1 string
+
+	if ret.Get(1) != nil {
+		r1 = ret.Get(1).(string)
+	}
+
+	var r2 error
+
+	if ret.Get(2) != nil {
+		r2 = ret.Get(2).(error)
+	}
+
+	return r0, r1, r2
+}

@@ -47,6 +47,36 @@ func (r *authCollection) FindUserByEmail(ctx context.Context, email string) (*mo
 	return user, nil
 }
 
+func (r *authCollection) ForgetPassword(ctx context.Context, email string) (*models.DBResponse, string, error) {
+	var user *models.DBResponse
+	query := bson.M{"email": strings.ToLower(email)}
+	if err := r.DB.FindOne(ctx, query).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return &models.DBResponse{}, "", err
+		}
+		return nil, "", err
+	}
+	resetToken := randstr.String(20)
+
+	passwordResetToken := utils.Encode(resetToken)
+
+	query1 := bson.D{{Key: "email", Value: strings.ToLower(email)}}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "passwordResetToken", Value: passwordResetToken},
+			{Key: "passwordResetAt", Value: time.Now().Add(time.Minute * 15)},
+		}},
+	}
+	_, err := r.DB.UpdateOne(ctx, query1, update)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	return user, resetToken, err
+
+}
+
 // func (r *authCollection) UpdateUserById(ctx context.Context, id primitive.ObjectID, field, value string) (*mongo.UpdateResult, error) {
 // 	query := bson.D{{Key: "_id", Value: id}}
 // 	update := bson.D{{Key: "$set", Value: bson.D{{Key: field, Value: value}}}}

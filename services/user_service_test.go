@@ -177,3 +177,68 @@ func TestResetPassword(t *testing.T) {
 	})
 
 }
+
+func TestForgetPassword(t *testing.T) {
+	mockAuthRepository := new(mocks.MockAuthRepository)
+	ctx := context.TODO()
+	temp := template.Must(template.ParseGlob("../templates/*.html"))
+	us := NewUserServiceImpl(mockAuthRepository, ctx, temp)
+
+	t.Run("Success", func(t *testing.T) {
+		email := "bochuang@gmail.com"
+		resetToken := "123456"
+		mockResponse := &AuthServiceResponse{
+			Message:    "You will receive a reset email if user with that email exist",
+			Status:     "success",
+			StatusCode: http.StatusOK,
+		}
+
+		mockUserResp := &models.DBResponse{
+			Name:     "Bo Chuang Jie",
+			Email:    "bochuang@gmail.com",
+			Role:     "user",
+			Verified: true,
+			Password: "$2a$10$AxVZoSa4XI1XdTbvElmm2eNHsBm7KST02qTmGboWYOleB4NOv11PK",
+		}
+
+		mockArgs1 := mock.Arguments{
+			mock.AnythingOfType("*context.emptyCtx"),
+			email,
+		}
+
+		mockAuthRepository.On("ForgetPassword", mockArgs1...).Return(mockUserResp, resetToken, nil)
+
+		response := us.ForgetPassword(email)
+		assert.NoError(t, response.Err)
+		assert.ObjectsAreEqual(mockResponse, response)
+	})
+
+	t.Run("On User Not Verified", func(t *testing.T) {
+		email := "bobo@gmail.com"
+		resetToken := "12345"
+		mockResponse := &AuthServiceResponse{
+			Message:    "account has not been verified. please verify your account with the email sent",
+			Status:     "fail",
+			StatusCode: http.StatusUnauthorized,
+		}
+
+		mockUserResp := &models.DBResponse{
+			Name:     "Bo Chuang Jie",
+			Email:    "bobo@gmail.com",
+			Role:     "user",
+			Verified: false,
+			Password: "$2a$10$AxVZoSa4XI1XdTbvElmm2eNHsBm7KST02qTmGboWYOleB4NOv11PK",
+		}
+
+		mockArgs1 := mock.Arguments{
+			mock.AnythingOfType("*context.emptyCtx"),
+			email,
+		}
+
+		mockAuthRepository.On("ForgetPassword", mockArgs1...).Return(mockUserResp, resetToken, nil)
+
+		response := us.ForgetPassword(email)
+		assert.Error(t, response.Err)
+		assert.ObjectsAreEqual(mockResponse, response)
+	})
+}
