@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/k3a/html2text"
+
 	"github.com/tonybobo/auth-template/config"
 	"github.com/tonybobo/auth-template/models"
 	"gopkg.in/gomail.v2"

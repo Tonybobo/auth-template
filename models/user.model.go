@@ -52,6 +52,16 @@ type ResetPasswordInput struct {
 	PasswordConfirm string `json:"passwordConfirm" bson:"passwordConfirm,omitempty" binding:"required"`
 }
 
+type AuthServiceResponse struct {
+	User               *DBResponse
+	Status             string
+	Err                error
+	Message            string
+	StatusCode         int
+	AccessToken        string
+	RefreshAccessToken string
+}
+
 func FilteredResponse(result *DBResponse) UserResponse {
 	return UserResponse{
 		ID:        result.ID,

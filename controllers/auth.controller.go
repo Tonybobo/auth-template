@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/tonybobo/auth-template/config"
 	"github.com/tonybobo/auth-template/models"
 	"github.com/tonybobo/auth-template/services"

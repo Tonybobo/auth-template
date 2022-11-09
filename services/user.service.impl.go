@@ -25,9 +25,9 @@ func NewUserServiceImpl(AuthRepository models.AuthRepository, ctx context.Contex
 	return &UserServiceImpl{AuthRepository, ctx, temp}
 }
 
-func (us *UserServiceImpl) RefreshAccessToken(cookie string) *AuthServiceResponse {
+func (us *UserServiceImpl) RefreshAccessToken(cookie string) *models.AuthServiceResponse {
 
-	result := &AuthServiceResponse{
+	result := &models.AuthServiceResponse{
 		Status:     "success",
 		StatusCode: http.StatusOK,
 	}
@@ -104,14 +104,14 @@ func (us *UserServiceImpl) UpdateOne(field string, value interface{}) (*models.D
 	return &models.DBResponse{}, nil
 }
 
-func (us *UserServiceImpl) VerifyEmail(verificationCode string) *AuthServiceResponse {
+func (us *UserServiceImpl) VerifyEmail(verificationCode string) *models.AuthServiceResponse {
 
-	response := &AuthServiceResponse{
+	response := &models.AuthServiceResponse{
 		Status:     "success",
 		StatusCode: http.StatusOK,
 		Message:    "Successfully Verified",
 	}
-
+	fmt.Print(verificationCode)
 	err := us.AuthRepository.VerifyEmail(us.ctx, verificationCode)
 
 	if err != nil {
@@ -132,9 +132,9 @@ func (us *UserServiceImpl) VerifyEmail(verificationCode string) *AuthServiceResp
 	return response
 }
 
-func (us *UserServiceImpl) ResetPassword(user *models.ResetPasswordInput, resetToken string) *AuthServiceResponse {
+func (us *UserServiceImpl) ResetPassword(user *models.ResetPasswordInput, resetToken string) *models.AuthServiceResponse {
 
-	response := &AuthServiceResponse{
+	response := &models.AuthServiceResponse{
 		Status:     "success",
 		StatusCode: http.StatusOK,
 		Message:    "Password updated successfully. Please Login with new password",
@@ -169,9 +169,9 @@ func (us *UserServiceImpl) ResetPassword(user *models.ResetPasswordInput, resetT
 	return response
 }
 
-func (us *UserServiceImpl) ForgetPassword(email string) *AuthServiceResponse {
+func (us *UserServiceImpl) ForgetPassword(email string) *models.AuthServiceResponse {
 
-	response := &AuthServiceResponse{
+	response := &models.AuthServiceResponse{
 		Message:    "You will receive a reset email if user with that email exist",
 		Status:     "success",
 		StatusCode: http.StatusOK,

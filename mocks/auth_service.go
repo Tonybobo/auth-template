@@ -9,19 +9,35 @@ type MockAuthService struct {
 	mock.Mock
 }
 
-func (m *MockAuthService) FindUserById(id string) (*models.DBResponse, error) {
-	ret := m.Called(id)
-	var r0 *models.DBResponse
+func (m *MockAuthService) Test() *models.AuthServiceResponse {
+	ret := m.Called()
+	var r0 *models.AuthServiceResponse
 
 	if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*models.DBResponse)
+		r0 = ret.Get(0).(*models.AuthServiceResponse)
 	}
 
-	var r1 error
+	return r0
+}
 
-	if ret.Get(1) != nil {
-		r1 = ret.Get(1).(error)
+func (m *MockAuthService) SignUpUser(user *models.SignUpInput) *models.AuthServiceResponse {
+	ret := m.Called(user)
+	var r0 *models.AuthServiceResponse
+
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*models.AuthServiceResponse)
 	}
 
-	return r0, r1
+	return r0
+}
+
+func (m *MockAuthService) SignInUser(user *models.SignInInput) *models.AuthServiceResponse {
+	ret := m.Called(user)
+	var r0 *models.AuthServiceResponse
+
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*models.AuthServiceResponse)
+	}
+
+	return r0
 }

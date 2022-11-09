@@ -1,4 +1,4 @@
-package services
+package test
 
 import (
 	"context"
@@ -11,13 +11,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/tonybobo/auth-template/mocks"
 	"github.com/tonybobo/auth-template/models"
+	"github.com/tonybobo/auth-template/services"
 )
 
 func TestSignUp(t *testing.T) {
 	mockAuthRepository := new(mocks.MockAuthRepository)
 	ctx := context.TODO()
 	temp := template.Must(template.ParseGlob("../templates/*.html"))
-	us := NewAuthService(mockAuthRepository, ctx, temp)
+	us := services.NewAuthService(mockAuthRepository, ctx, temp)
 	t.Run("Success", func(t *testing.T) {
 		mockUser := &models.SignUpInput{
 			Name:            "Bo Chuang Jie",
@@ -34,7 +35,7 @@ func TestSignUp(t *testing.T) {
 			Verified: false,
 		}
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			User:       mockUserResp,
 			Status:     "success",
 			StatusCode: http.StatusOK,
@@ -63,7 +64,7 @@ func TestSignUp(t *testing.T) {
 			PasswordConfirm: "123456",
 		}
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			User:       nil,
 			Status:     "fail",
 			StatusCode: http.StatusBadRequest,
@@ -85,7 +86,7 @@ func TestSignUp(t *testing.T) {
 			PasswordConfirm: "12345678",
 		}
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			User:       nil,
 			Status:     "fail",
 			StatusCode: http.StatusBadGateway,
@@ -111,7 +112,7 @@ func TestSignIn(t *testing.T) {
 	mockAuthRepository := new(mocks.MockAuthRepository)
 	ctx := context.TODO()
 	temp := template.Must(template.ParseGlob("../templates/*.html"))
-	us := NewAuthService(mockAuthRepository, ctx, temp)
+	us := services.NewAuthService(mockAuthRepository, ctx, temp)
 
 	t.Run("Success", func(t *testing.T) {
 		mockUser := &models.SignInInput{
@@ -127,7 +128,7 @@ func TestSignIn(t *testing.T) {
 			Password: "$2a$10$AxVZoSa4XI1XdTbvElmm2eNHsBm7KST02qTmGboWYOleB4NOv11PK",
 		}
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			User:       mockUserResp,
 			Status:     "success",
 			StatusCode: http.StatusOK,
@@ -161,7 +162,7 @@ func TestSignIn(t *testing.T) {
 			Password: "$2a$10$AxVZoSa4XI1XdTbvElmm2eNHsBm7KST02qTmGboWYOleB4NOv11PK",
 		}
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			User:       nil,
 			Status:     "fail",
 			StatusCode: http.StatusUnauthorized,
@@ -195,7 +196,7 @@ func TestSignIn(t *testing.T) {
 			Password: "$2a$10$AxVZoSa4XI1XdTbvElmm2eNHsBm7KST02qTmGboWYOleB4NOv11PK",
 		}
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			User:       nil,
 			Status:     "fail",
 			StatusCode: http.StatusUnauthorized,

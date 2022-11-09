@@ -21,30 +21,20 @@ type AuthServiceImpl struct {
 	temp           *template.Template
 }
 
-type AuthServiceResponse struct {
-	User               *models.DBResponse
-	Status             string
-	Err                error
-	Message            string
-	StatusCode         int
-	AccessToken        string
-	RefreshAccessToken string
-}
-
 func NewAuthService(AuthRepository models.AuthRepository, ctx context.Context, temp *template.Template) AuthService {
 	return &AuthServiceImpl{AuthRepository, ctx, temp}
 }
 
-func (uc *AuthServiceImpl) Test() *AuthServiceResponse {
+func (uc *AuthServiceImpl) Test() *models.AuthServiceResponse {
 
-	return &AuthServiceResponse{
+	return &models.AuthServiceResponse{
 		Message: "test",
 	}
 }
 
-func (uc *AuthServiceImpl) SignInUser(credential *models.SignInInput) *AuthServiceResponse {
+func (uc *AuthServiceImpl) SignInUser(credential *models.SignInInput) *models.AuthServiceResponse {
 
-	result := &AuthServiceResponse{
+	result := &models.AuthServiceResponse{
 		Status:     "success",
 		StatusCode: http.StatusOK,
 	}
@@ -111,9 +101,9 @@ func (uc *AuthServiceImpl) SignInUser(credential *models.SignInInput) *AuthServi
 	return result
 }
 
-func (uc *AuthServiceImpl) SignUpUser(user *models.SignUpInput) *AuthServiceResponse {
+func (uc *AuthServiceImpl) SignUpUser(user *models.SignUpInput) *models.AuthServiceResponse {
 
-	result := &AuthServiceResponse{
+	result := &models.AuthServiceResponse{
 		Status:     "success",
 		StatusCode: http.StatusOK,
 	}

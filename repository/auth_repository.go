@@ -9,6 +9,7 @@ import (
 	"github.com/thanhpk/randstr"
 	"github.com/tonybobo/auth-template/models"
 	"github.com/tonybobo/auth-template/utils"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -179,5 +180,5 @@ func (r *authCollection) SignUpUser(ctx context.Context, user *models.SignUpInpu
 		return nil, "", err
 	}
 
-	return newUser, verificationCode, nil
+	return newUser, code, nil
 }

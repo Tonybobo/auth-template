@@ -1,4 +1,4 @@
-package services
+package test
 
 import (
 	"context"
@@ -11,18 +11,19 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/tonybobo/auth-template/mocks"
 	"github.com/tonybobo/auth-template/models"
+	"github.com/tonybobo/auth-template/services"
 )
 
 func TestRefreshAccessToken(t *testing.T) {
 	mockAuthRepository := new(mocks.MockAuthRepository)
 	ctx := context.TODO()
 	temp := template.Must(template.ParseGlob("../templates/*.html"))
-	us := NewUserServiceImpl(mockAuthRepository, ctx, temp)
+	us := services.NewUserServiceImpl(mockAuthRepository, ctx, temp)
 
 	t.Run("expired token", func(t *testing.T) {
 
 		cookie := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Njc4MTM1ODIsImlhdCI6MTY2NzgwOTk4MiwibmJmIjoxNjY3ODA5OTgyLCJzdWIiOiI2MzY3NjkzZGRlMjkwOTFhYWFhNWRhZGQifQ.Xt3UtH6ll9q1y0vVelCU0cgPt_gKTKHLigIKHggOW1IbEFMvhtsSHI_Sh7dJlq73F1Sgs8KTleX19KoWOQb3bw"
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			User:       nil,
 			Status:     "fail",
 			StatusCode: http.StatusForbidden,
@@ -41,11 +42,11 @@ func TestVerifyEmail(t *testing.T) {
 	mockAuthRepository := new(mocks.MockAuthRepository)
 	ctx := context.TODO()
 	temp := template.Must(template.ParseGlob("../templates/*.html"))
-	us := NewUserServiceImpl(mockAuthRepository, ctx, temp)
+	us := services.NewUserServiceImpl(mockAuthRepository, ctx, temp)
 
 	t.Run("Success", func(t *testing.T) {
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			Status:     "success",
 			StatusCode: http.StatusOK,
 			Message:    "Successfully Verified",
@@ -63,7 +64,7 @@ func TestVerifyEmail(t *testing.T) {
 
 	t.Run("Invalid Email", func(t *testing.T) {
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			Status:     "fail",
 			StatusCode: http.StatusForbidden,
 			Message:    "invalid email",
@@ -82,7 +83,7 @@ func TestVerifyEmail(t *testing.T) {
 
 	t.Run("DB error", func(t *testing.T) {
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			Status:     "fail",
 			StatusCode: http.StatusBadGateway,
 		}
@@ -104,7 +105,7 @@ func TestResetPassword(t *testing.T) {
 	mockAuthRepository := new(mocks.MockAuthRepository)
 	ctx := context.TODO()
 	temp := template.Must(template.ParseGlob("../templates/*.html"))
-	us := NewUserServiceImpl(mockAuthRepository, ctx, temp)
+	us := services.NewUserServiceImpl(mockAuthRepository, ctx, temp)
 
 	t.Run("Success", func(t *testing.T) {
 		mockUserInput := &models.ResetPasswordInput{
@@ -112,7 +113,7 @@ func TestResetPassword(t *testing.T) {
 			PasswordConfirm: "12345678",
 		}
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			Status:     "success",
 			StatusCode: http.StatusOK,
 			Message:    "Password updated successfully. Please Login with new password",
@@ -135,7 +136,7 @@ func TestResetPassword(t *testing.T) {
 			PasswordConfirm: "12345678",
 		}
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			Status:     "fail",
 			StatusCode: http.StatusForbidden,
 			Message:    "invalid or expired token",
@@ -159,7 +160,7 @@ func TestResetPassword(t *testing.T) {
 			PasswordConfirm: "12345679",
 		}
 
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			Status:     "fail",
 			StatusCode: http.StatusBadRequest,
 			Message:    "Password does not match",
@@ -182,12 +183,12 @@ func TestForgetPassword(t *testing.T) {
 	mockAuthRepository := new(mocks.MockAuthRepository)
 	ctx := context.TODO()
 	temp := template.Must(template.ParseGlob("../templates/*.html"))
-	us := NewUserServiceImpl(mockAuthRepository, ctx, temp)
+	us := services.NewUserServiceImpl(mockAuthRepository, ctx, temp)
 
 	t.Run("Success", func(t *testing.T) {
 		email := "bochuang@gmail.com"
 		resetToken := "123456"
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			Message:    "You will receive a reset email if user with that email exist",
 			Status:     "success",
 			StatusCode: http.StatusOK,
@@ -216,7 +217,7 @@ func TestForgetPassword(t *testing.T) {
 	t.Run("On User Not Verified", func(t *testing.T) {
 		email := "bobo@gmail.com"
 		resetToken := "12345"
-		mockResponse := &AuthServiceResponse{
+		mockResponse := &models.AuthServiceResponse{
 			Message:    "account has not been verified. please verify your account with the email sent",
 			Status:     "fail",
 			StatusCode: http.StatusUnauthorized,
