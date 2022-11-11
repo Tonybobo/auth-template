@@ -111,7 +111,6 @@ func (us *UserServiceImpl) VerifyEmail(verificationCode string) *models.AuthServ
 		StatusCode: http.StatusOK,
 		Message:    "Successfully Verified",
 	}
-	fmt.Print(verificationCode)
 	err := us.AuthRepository.VerifyEmail(us.ctx, verificationCode)
 
 	if err != nil {
